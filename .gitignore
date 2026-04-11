@@ -1,0 +1,15 @@
+# logs
+*.log
+
+# node
+node_modules/
+
+# env files
+.env
+
+# docker volumes
+qdrant_storage/
+open-webui/
+
+# system artifacts
+.DS_Store
