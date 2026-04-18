@@ -1,0 +1,11 @@
+---
+# Required Ansible collections used by this project.
+collections:
+  # Docker modules for container lifecycle management.
+  - name: community.docker
+    # Minimum version with features used in this playbook.
+    version: ">=3.0.0"
+  # General utility modules for broader compatibility.
+  - name: community.general
+    # Minimum tested version for this setup.
+    version: ">=8.0.0"

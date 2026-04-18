@@ -1,0 +1,15 @@
+---
+# Default application owner user derived from inventory login user.
+app_user: "{{ ansible_user }}"
+# Default home directory for application owner user.
+app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
+# Default application deployment directory.
+app_dir: "{{ app_home }}/ai-stack"
+# Architecture mapping from Ansible facts to Debian repository arch values.
+apt_arch_map:
+  # AMD64 mapping for common x86_64 hosts.
+  x86_64: amd64
+  # ARM64 mapping for aarch64 hosts.
+  aarch64: arm64
+  # ARMHF mapping for 32-bit ARM hosts.
+  armv7l: armhf

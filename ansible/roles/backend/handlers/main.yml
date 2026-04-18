@@ -1,0 +1,13 @@
+---
+# Restart backend service when code or dependencies change.
+- name: Restart ai-backend
+  systemd:
+    name: ai-backend
+    state: restarted
+  become: yes
+
+# Reload systemd manager config after unit updates.
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  become: yes

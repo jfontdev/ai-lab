@@ -1,0 +1,85 @@
+---
+# Main playbook that provisions the AI Lab stack.
+- name: Setup AI Lab
+  # Target inventory group to configure.
+  hosts: ai_lab
+  # Run tasks with elevated privileges where required.
+  become: yes
+  # Gather host facts used by role logic and templates.
+  gather_facts: yes
+
+  # Shared variables available to all included roles.
+  vars:
+    # Application owner user on the target host (derived from inventory login user).
+    app_user: "{{ ansible_user }}"
+    # Home directory for the application owner user.
+    app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
+    # Base directory where backend files are deployed.
+    app_dir: "{{ app_home }}/ai-stack"
+    # Keep model pull disabled by default for faster and safer provisioning.
+    ollama_pull_models: false
+    # Enable startup warmup service for the primary Ollama model.
+    ollama_warmup_enabled: true
+
+  # Role execution order matters for dependencies (base -> services -> app).
+  roles:
+    # Installs base packages, repositories, and Node.js runtime.
+    - role: base
+      # Allows targeting this role with --tags base.
+      tags: ['base']
+
+    # Installs and configures Ollama before UI/backend consumers.
+    - role: ollama
+      # Allows targeting this role with --tags ollama.
+      tags: ['ollama']
+      # Optional role toggle for selective runs.
+      when: run_ollama | default(true)
+
+    # Installs Docker and starts containerized services.
+    - role: docker
+      # Allows targeting this role with --tags docker.
+      tags: ['docker']
+      # Optional role toggle for selective runs.
+      when: run_docker | default(true)
+
+    # Deploys backend code, dependencies, and systemd unit.
+    - role: backend
+      # Allows targeting this role with --tags backend.
+      tags: ['backend']
+      # Optional role toggle for selective runs.
+      when: run_backend | default(true)
+
+    # Writes SSH alias configuration for convenience access.
+    - role: ssh
+      # Allows targeting this role with --tags ssh.
+      tags: ['ssh']
+      # Optional role toggle for selective runs.
+      when: run_ssh | default(true)
+
+  # Final informational output shown at the end of a successful run.
+  post_tasks:
+    # Print service endpoints and useful follow-up commands.
+    - name: Display access information
+      debug:
+        msg: |
+          ========================================
+          AI Lab Setup Complete!
+          ========================================
+
+          Services:
+          - Ollama:     http://localhost:11434
+          - OpenWebUI: http://localhost:8080
+          - Qdrant:    http://localhost:6333
+          - Backend:   http://localhost:3000
+
+          Useful commands:
+          - ~/health.sh         # Health check
+          - ~/logs.sh           # View logs
+          - systemctl status ollama
+          - systemctl status ai-backend
+
+          To pull models manually:
+          - ollama pull gemma4:e2b
+          - ollama pull gemma4:e4b
+          - ollama pull gemma4:26b
+          ========================================

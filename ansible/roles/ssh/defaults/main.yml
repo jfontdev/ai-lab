@@ -1,0 +1,13 @@
+---
+# Default application owner user derived from inventory login user.
+app_user: "{{ ansible_user }}"
+# Default home directory for application owner user.
+app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
+# SSH alias name written to ~/.ssh/config.
+ssh_alias_name: "{{ inventory_hostname }}"
+# SSH alias target host/IP.
+ssh_alias_host: "{{ ansible_host | default(inventory_hostname) }}"
+# SSH alias login user.
+ssh_alias_user: "{{ ansible_user }}"
+# SSH private key path used by the alias.
+ssh_identity_file: ~/.ssh/id_ed25519
