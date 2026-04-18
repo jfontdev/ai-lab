@@ -1,0 +1,90 @@
+---
+# Install Docker engine and related CLI/plugins.
+- name: Install Docker packages
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+  become: yes
+  notify: Start Docker
+
+# Ensure docker Unix group exists for non-root access.
+- name: Ensure docker group exists
+  group:
+    name: docker
+    state: present
+  become: yes
+
+# Add app user to docker group for container operations.
+- name: Add user to docker group
+  user:
+    name: "{{ app_user }}"
+    groups: docker
+    append: yes
+  become: yes
+
+# Enable Docker service on boot and start now.
+- name: Enable and start Docker
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+  become: yes
+
+# Small wait to avoid race conditions before container tasks.
+- name: Wait for Docker to be ready
+  wait_for:
+    delay: 3
+    timeout: 10
+
+# Create persistent storage directory for Qdrant vectors.
+- name: Create qdrant storage directory
+  file:
+    path: "{{ app_dir }}/qdrant_storage"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+# Create persistent storage directory for OpenWebUI data.
+- name: Create OpenWebUI data directory
+  file:
+    path: "{{ openwebui_data_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+
+# Start or reconcile Qdrant container state.
+- name: Start Qdrant container
+  community.docker.docker_container:
+    name: qdrant
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - "{{ app_dir }}/qdrant_storage:/qdrant/storage"
+    restart_policy: unless-stopped
+    state: started
+
+# Start or reconcile OpenWebUI container state.
+- name: Start OpenWebUI container
+  community.docker.docker_container:
+    name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "8080:8080"
+    volumes:
+      - "{{ openwebui_data_dir }}:/app/backend/data"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    env:
+      OLLAMA_BASE_URL: "{{ openwebui_ollama_base_url }}"
+      WEBUI_SECRET_KEY: "{{ openwebui_secret_key }}"
+    restart_policy: unless-stopped
+    state: started

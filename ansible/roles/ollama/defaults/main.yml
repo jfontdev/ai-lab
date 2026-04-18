@@ -1,0 +1,5 @@
+---
+# Toggle automatic model pull tasks during provisioning.
+ollama_pull_models: false
+# Toggle installation/enablement of the warmup service.
+ollama_warmup_enabled: true

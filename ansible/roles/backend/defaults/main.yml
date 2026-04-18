@@ -1,0 +1,13 @@
+---
+# Default application owner user derived from inventory login user.
+app_user: "{{ ansible_user }}"
+# Default home directory for application owner user.
+app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
+# Default application deployment directory.
+app_dir: "{{ app_home }}/ai-stack"
+# Default backend model sent to Ollama unless overridden.
+ollama_model: gemma4:e4b
+# Backend repository URL (public HTTPS).
+app_repo_url: https://github.com/jfontdev/ai-lab.git
+# Backend repository version/branch to deploy.
+app_repo_version: main

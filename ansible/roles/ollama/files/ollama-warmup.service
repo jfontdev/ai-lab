@@ -1,0 +1,11 @@
+[Unit]
+Description=Warm up E4B model
+After=ollama.service
+Wants=ollama.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash -c "sleep 5 && curl http://localhost:11434/api/generate -d '{\"model\":\"gemma4:e4b\",\"prompt\":\"warmup\",\"stream\":false}'"
+
+[Install]
+WantedBy=multi-user.target

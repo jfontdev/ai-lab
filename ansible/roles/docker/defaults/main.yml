@@ -1,0 +1,15 @@
+---
+# Default application owner user derived from inventory login user.
+app_user: "{{ ansible_user }}"
+# Default home directory for application owner user.
+app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
+# Default application deployment directory.
+app_dir: "{{ app_home }}/ai-stack"
+# Legacy toggle kept for compatibility with older runs.
+docker_pull_images: true
+# Secret used by OpenWebUI session/auth internals.
+openwebui_secret_key: change-this-secret
+# Persistent storage path for OpenWebUI internal data.
+openwebui_data_dir: "{{ app_dir }}/openwebui_data"
+# Ollama endpoint as seen from inside OpenWebUI container.
+openwebui_ollama_base_url: http://host.docker.internal:11434

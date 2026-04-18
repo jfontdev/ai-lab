@@ -1,0 +1,13 @@
+---
+# Restart Ollama service when unit or install changes require it.
+- name: Restart Ollama
+  systemd:
+    name: ollama
+    state: restarted
+  become: yes
+
+# Reload systemd manager configuration after unit file updates.
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+  become: yes

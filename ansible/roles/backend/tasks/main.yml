@@ -1,0 +1,126 @@
+---
+# Check whether the application directory already exists.
+- name: Check if app directory exists
+  stat:
+    path: "{{ app_dir }}"
+  register: app_dir_stat
+
+# Check whether an existing app directory is already a git repository.
+- name: Check if app directory is a git repository
+  stat:
+    path: "{{ app_dir }}/.git"
+  register: app_git_stat
+  when: app_dir_stat.stat.exists
+
+# Fail safely instead of overwriting non-git directories.
+- name: Fail if app directory exists and is not a git repository
+  fail:
+    msg: >-
+      The path {{ app_dir }} already exists but is not a git repository.
+      Move/remove it or set app_dir to another location before running this playbook.
+  when:
+    - app_dir_stat.stat.exists
+    - not app_git_stat.stat.exists
+
+# Ensure application directory exists with correct ownership.
+- name: Ensure app directory exists
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+  become: yes
+
+# Clone or update backend repository from public HTTPS source.
+- name: Checkout backend repository
+  git:
+    repo: "{{ app_repo_url }}"
+    dest: "{{ app_dir }}"
+    version: "{{ app_repo_version }}"
+    update: yes
+    force: no
+  become: yes
+  become_user: "{{ app_user }}"
+  register: backend_repo_checkout
+  notify: Restart ai-backend
+
+# Ensure helper script destination home exists.
+- name: Ensure app user home directory exists
+  file:
+    path: "{{ app_home }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+  become: yes
+
+# Install health helper script in user home.
+- name: Copy health.sh to home directory
+  copy:
+    src: "{{ app_dir }}/health.sh"
+    dest: "{{ app_home }}/health.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+    remote_src: yes
+  become: yes
+
+# Install logs helper script in user home.
+- name: Copy logs.sh to home directory
+  copy:
+    src: "{{ app_dir }}/logs.sh"
+    dest: "{{ app_home }}/logs.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+    remote_src: yes
+  become: yes
+
+# Install optional model pull helper script in user home.
+- name: Copy pull_models.sh to home directory
+  copy:
+    src: "{{ playbook_dir }}/files/pull_models.sh"
+    dest: "{{ app_home }}/pull_models.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+  become: yes
+
+# Install production Node.js dependencies only.
+- name: Install Node.js dependencies
+  command: npm ci --omit=dev
+  args:
+    chdir: "{{ app_dir }}"
+  become: yes
+  become_user: "{{ app_user }}"
+  notify: Restart ai-backend
+
+# Render backend systemd unit with host-specific variables.
+- name: Render ai-backend systemd service
+  template:
+    src: ai-backend.service.j2
+    dest: /etc/systemd/system/ai-backend.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify:
+    - Reload systemd
+    - Restart ai-backend
+
+# Enable and start backend service.
+- name: Enable and start ai-backend service
+  systemd:
+    name: ai-backend
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: yes
+
+# Wait until backend health port is listening.
+- name: Wait for backend to be ready
+  wait_for:
+    port: 3000
+    delay: 3
+    timeout: 30

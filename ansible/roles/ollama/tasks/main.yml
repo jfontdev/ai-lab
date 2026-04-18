@@ -1,0 +1,110 @@
+---
+# Detect existing Ollama installation to keep install idempotent.
+- name: Check if Ollama is installed
+  command: which ollama
+  register: ollama_check
+  failed_when: false
+  changed_when: false
+
+# Download official Ollama install script when missing.
+- name: Download Ollama install script
+  get_url:
+    url: https://ollama.ai/install.sh
+    dest: /tmp/ollama_install.sh
+    mode: '0755'
+  when: ollama_check.rc != 0
+
+# Execute Ollama installer only if binary is absent.
+- name: Run Ollama install script
+  command:
+    cmd: /tmp/ollama_install.sh
+    creates: /usr/local/bin/ollama
+  when: ollama_check.rc != 0
+  become: yes
+  notify: Restart Ollama
+
+# Ensure dedicated system user exists for Ollama service.
+- name: Ensure ollama user exists
+  user:
+    name: ollama
+    comment: "Ollama Service User"
+    shell: /bin/false
+    create_home: no
+    system: yes
+  become: yes
+
+# Deploy managed Ollama systemd unit.
+- name: Copy ollama systemd service
+  copy:
+    src: ollama.service
+    dest: /etc/systemd/system/ollama.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: Reload systemd
+
+# Deploy managed model warmup systemd unit.
+- name: Copy ollama-warmup systemd service
+  copy:
+    src: ollama-warmup.service
+    dest: /etc/systemd/system/ollama-warmup.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: Reload systemd
+
+# Enable and start Ollama API service.
+- name: Enable and start Ollama service
+  systemd:
+    name: ollama
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: yes
+
+# Wait until Ollama listens on expected API port.
+- name: Wait for Ollama to be ready
+  wait_for:
+    port: 11434
+    delay: 5
+    timeout: 60
+
+# Optional pull for fast model profile.
+- name: Pull gemma4:e2b model
+  command: ollama pull gemma4:e2b
+  retries: 3
+  delay: 30
+  register: pull_e2b
+  failed_when: false
+  changed_when: false
+  when: ollama_pull_models | default(false)
+
+# Optional pull for primary workhorse model.
+- name: Pull gemma4:e4b model
+  command: ollama pull gemma4:e4b
+  retries: 3
+  delay: 30
+  register: pull_e4b
+  failed_when: false
+  changed_when: false
+  when: ollama_pull_models | default(false)
+
+# Optional pull for heavy reasoning model.
+- name: Pull gemma4:26b model
+  command: ollama pull gemma4:26b
+  retries: 3
+  delay: 30
+  register: pull_26b
+  failed_when: false
+  changed_when: false
+  when: ollama_pull_models | default(false)
+
+# Enable warmup service to reduce first-token latency after boot.
+- name: Enable ollama-warmup service
+  systemd:
+    name: ollama-warmup
+    enabled: yes
+  become: yes
+  when: ollama_warmup_enabled | default(true)
