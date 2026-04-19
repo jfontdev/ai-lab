@@ -47,6 +47,11 @@ Local mode behavior:
 - Skips backend git checkout (`backend_manage_repo=false`)
 - Uses existing repo checkout (`app_dir={{ playbook_dir | dirname }}`)
 
+Lightweight debug (enabled by default):
+- Task runtime summary (`profile_tasks`) at end of run
+- Total playbook duration (`timer`) in recap
+- Use `-vv` only when deep troubleshooting is needed
+
 ## Common Useful Commands
 
 Run syntax checks:
