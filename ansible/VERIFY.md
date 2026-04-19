@@ -10,6 +10,14 @@ ansible-playbook -i inventory.ini playbook.yml --syntax-check
 ansible-inventory -i inventory.ini --graph
 ```
 
+Local profile validation:
+
+```bash
+cd ansible
+ANSIBLE_CONFIG=ansible.local.cfg ansible-playbook playbook.yml --syntax-check
+ansible-inventory -i inventory.local.yml --graph
+```
+
 ## 2) Core services status (target host)
 
 ```bash
@@ -61,6 +69,8 @@ Expected:
 - Active branch is `main` (unless you overrode `app_repo_version`).
 - Latest commit is visible.
 
+If using local mode (`backend_manage_repo=false`), this section validates the repo you already cloned.
+
 ## 6) Installed helper scripts (target host)
 
 ```bash
@@ -71,6 +81,8 @@ bash ~/health.sh
 Expected:
 - Scripts exist and are executable.
 - Health script reports active services.
+
+In local mode, scripts are copied from the existing repo checkout in `app_dir`.
 
 ## 7) Backend model wiring (target host)
 

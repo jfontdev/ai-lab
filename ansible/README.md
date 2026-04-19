@@ -22,6 +22,27 @@ nano inventory.ini
 ansible-playbook -i inventory.ini playbook.yml --ask-become-pass
 ```
 
+## Execution Modes
+
+### Remote mode (run from another machine over SSH)
+
+```bash
+cd ansible
+ansible-playbook -i inventory.ini playbook.yml --ask-become-pass
+```
+
+### Local mode (run directly on target host)
+
+```bash
+cd ai-stack/ansible
+ANSIBLE_CONFIG=ansible.local.cfg ansible-playbook playbook.yml -K
+```
+
+Notes:
+- Local mode does not use SSH transport.
+- Local mode skips backend git checkout (`backend_manage_repo=false`) and uses the already cloned repo.
+- `-K` is required to provide sudo password for privileged tasks.
+
 ## File Structure
 
 ```text
@@ -70,6 +91,7 @@ ansible/
 - `app_user` defaults to `ansible_user`
 - `app_home` defaults to `ansible_user_dir` (or `/home/<user>`)
 - `app_dir` defaults to `{{ app_home }}/ai-stack`
+- `backend_manage_repo` defaults to `true` (set to `false` in local profile)
 
 ### SSH
 - Writes an SSH alias config in `~/.ssh/config`
@@ -106,6 +128,7 @@ ansible-playbook -i inventory.ini playbook.yml \
   -e "openwebui_secret_key=replace-me" \
   -e "ollama_model=gemma4:e4b" \
   -e "app_repo_version=main" \
+  -e "backend_manage_repo=true" \
   -e "ollama_pull_models=false" \
   --ask-become-pass
 ```
