@@ -4,6 +4,14 @@ All notable changes to the AI Lab Ansible project are documented in this file.
 
 The format follows Keep a Changelog style and uses Semantic Versioning.
 
+## [0.2.1] - 2026-04-18
+
+### Fixed
+- OpenWebUI container task compatibility by replacing unsupported `extra_hosts` with supported `etc_hosts` in `community.docker.docker_container`.
+
+### Changed
+- Refactored `README.md` to provide clearer, command-first guidance for remote and local execution modes.
+
 ## [0.2.0] - 2026-04-18
 
 ### Added

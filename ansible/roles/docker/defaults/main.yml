@@ -12,4 +12,5 @@ openwebui_secret_key: change-this-secret
 # Persistent storage path for OpenWebUI internal data.
 openwebui_data_dir: "{{ app_dir }}/openwebui_data"
 # Ollama endpoint as seen from inside OpenWebUI container.
+# host.docker.internal is mapped via container /etc/hosts in docker tasks.
 openwebui_ollama_base_url: http://host.docker.internal:11434

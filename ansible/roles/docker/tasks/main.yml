@@ -81,8 +81,8 @@
       - "8080:8080"
     volumes:
       - "{{ openwebui_data_dir }}:/app/backend/data"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    etc_hosts:
+      host.docker.internal: host-gateway
     env:
       OLLAMA_BASE_URL: "{{ openwebui_ollama_base_url }}"
       WEBUI_SECRET_KEY: "{{ openwebui_secret_key }}"
