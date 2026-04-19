@@ -1,6 +1,6 @@
 ---
 # Default application owner user derived from inventory login user.
-app_user: "{{ ansible_user }}"
+app_user: "{{ ansible_user | default(ansible_user_id) }}"
 # Default home directory for application owner user.
 app_home: "{{ ansible_user_dir | default('/home/' ~ app_user) }}"
 # Default application deployment directory.
@@ -11,3 +11,5 @@ ollama_model: gemma4:e4b
 app_repo_url: https://github.com/jfontdev/ai-lab.git
 # Backend repository version/branch to deploy.
 app_repo_version: main
+# Toggle whether backend role manages git checkout/update.
+backend_manage_repo: true
