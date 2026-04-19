@@ -4,13 +4,16 @@
   stat:
     path: "{{ app_dir }}"
   register: app_dir_stat
+  when: backend_manage_repo | bool
 
 # Check whether an existing app directory is already a git repository.
 - name: Check if app directory is a git repository
   stat:
     path: "{{ app_dir }}/.git"
   register: app_git_stat
-  when: app_dir_stat.stat.exists
+  when:
+    - backend_manage_repo | bool
+    - app_dir_stat.stat.exists
 
 # Fail safely instead of overwriting non-git directories.
 - name: Fail if app directory exists and is not a git repository
@@ -19,6 +22,7 @@
       The path {{ app_dir }} already exists but is not a git repository.
       Move/remove it or set app_dir to another location before running this playbook.
   when:
+    - backend_manage_repo | bool
     - app_dir_stat.stat.exists
     - not app_git_stat.stat.exists
 
@@ -44,6 +48,7 @@
   become_user: "{{ app_user }}"
   register: backend_repo_checkout
   notify: Restart ai-backend
+  when: backend_manage_repo | bool
 
 # Ensure helper script destination home exists.
 - name: Ensure app user home directory exists

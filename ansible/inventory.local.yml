@@ -1,0 +1,26 @@
+---
+# Local inventory profile for running Ansible directly on target host.
+all:
+  children:
+    # Keep same group name as primary inventory so play host pattern stays consistent.
+    ai_lab:
+      hosts:
+        localhost:
+  hosts:
+    localhost:
+      # Run tasks locally without SSH transport.
+      ansible_connection: local
+      # Use the current local account as target user context.
+      ansible_user: "{{ lookup('env', 'USER') }}"
+      # Ensure Python interpreter path is explicit.
+      ansible_python_interpreter: /usr/bin/python3
+  vars:
+    # Skip SSH alias role in local execution mode.
+    run_ssh: false
+    # In local mode, use the already cloned repository and skip git checkout.
+    backend_manage_repo: false
+    # In local mode, app directory is repository root above ansible folder.
+    app_dir: "{{ playbook_dir | dirname }}"
+    # Derive app owner/home from local execution account.
+    app_user: "{{ lookup('env', 'USER') }}"
+    app_home: "{{ lookup('env', 'HOME') }}"
